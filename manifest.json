@@ -1,0 +1,26 @@
+{
+  "name": "ACHIM — Cahier interactif CP",
+  "short_name": "Cahier ACHIM",
+  "description": "Cahier interactif pour les élèves de CP de l'École ACHIM",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#00209F",
+  "theme_color": "#00209F",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
