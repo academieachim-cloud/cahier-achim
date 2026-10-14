@@ -16,4 +16,4 @@ Cahier numérique pour les élèves de CP de l'**École ACHIM** (Année 2025-202
 
 ## 🚀 Utilisation
 
-Ouvre simplement [https://TON-PSEUDO.github.io/cahier-achim/](https://TON-PSEUDO.github.io/cahier-achim/)
+Ouvre simplement https://academieachim-cloud.github.io/cahier-achim/
