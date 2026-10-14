@@ -28,7 +28,7 @@
   --text-main: #ecf0f1;
   --text-muted: #a0b0c0;
   --text-on-modal: #000000;
-  --text-title-modal: #00209F;
+  --text-title-modal: #1A3E62;
   --border-color: #0f1820;
   --shadow: rgba(0,0,0,0.5);
   --canvas-bg: #ffffff;
@@ -42,8 +42,8 @@
   --input-border: #ddd;
   --input-bg: #ffffff;
   --input-text: #000;
-  --achim-bleu: #00209F;
-  --achim-rouge: #D21034;
+  --achim-bleu: #1A3E62;
+  --achim-rouge: #337C44;
   --achim-or: #f39c12;
   --achim-vert: #27ae60;
   --clip-select: #3498db;
@@ -1305,15 +1305,14 @@ body.text-select-mode button {
 }
 #empty .logo:hover {
   transform: translateY(-8px) scale(1.08);
-  box-shadow: 0 16px 40px rgba(0,32,159,0.6),
-              0 0 40px rgba(210,16,52,0.4);
+  box-shadow: 0 16px 40px rgba(26, 62, 98, 0.6), 0 0 40px rgba(51, 124, 68, 0.4);
 }
 #empty .logo::after {
   content: '';
   position: absolute;
   inset: -10px;
   border-radius: 32px;
-  background: radial-gradient(circle, rgba(0,32,159,0.3), transparent 70%);
+  background: radial-gradient(circle, rgba(26, 62, 98, 0.3), transparent 70%);
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;
@@ -2008,7 +2007,7 @@ const ACHIM = {
   nom: 'École ACHIM',
   anneeScolaire: '2025-2026',
   email: 'academie.achim@gmail.com',
-  couleurs: { bleu: '#00209F', rouge: '#D21034' },
+  couleurs: { bleu: '#1A3E62', rouge: '#337C44' },
 };
 const EMAILJS_CONFIG = {
   publicKey: localStorage.getItem('cahier-emailjs-pub') || 'REMPLACE_TA_PUBLIC_KEY',
@@ -4902,9 +4901,9 @@ function addStatsPage(pdf, stats) {
   pdf.addPage([w, h], 'portrait');
   const subj = SUBJECTS[state.subject] || SUBJECTS.cahier;
   pdf.setFillColor(245, 247, 250); pdf.rect(0, 0, w, h, 'F');
-  pdf.setFillColor(0, 32, 159); pdf.rect(0, 0, w/2, 10, 'F');
-  pdf.setFillColor(210, 16, 52); pdf.rect(w/2, 0, w/2, 10, 'F');
-  pdf.setTextColor(0, 32, 159); pdf.setFontSize(14); pdf.setFont(undefined, 'bold');
+  pdf.setFillColor(26, 62, 98); pdf.rect(0, 0, w/2, 10, 'F');
+  pdf.setFillColor(51, 124, 68); pdf.rect(w/2, 0, w/2, 10, 'F');
+  pdf.setTextColor(26, 62, 98);  pdf.setFontSize(14); pdf.setFont(undefined, 'bold');
   pdf.text('🎓 ÉCOLE ACHIM', 40, 40);
   pdf.setTextColor(44, 62, 80); pdf.setFontSize(22);
   pdf.text('📊 Fiche de suivi', 40, 75);
