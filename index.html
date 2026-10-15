@@ -5822,6 +5822,9 @@ document.getElementById('presentExit').onclick = exitPresentation;
 /* ============================================================
    PWA — SERVICE WORKER + INSTALL
    ============================================================ */
+/* ============================================================
+   PWA — SERVICE WORKER + INSTALL
+   ============================================================ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -5829,14 +5832,27 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.warn('[PWA] Erreur SW:', err));
   });
 }
+
 let deferredPrompt = null;
+
+// Vérifier si l'application est DÉJÀ exécutée en tant qu'application installée (standalone)
+function isPwaInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true;
+}
+
 window.addEventListener('beforeinstallprompt', (e) => {
+  // Si l'application est déjà lancée depuis son icône/fenêtre, on ne montre pas le bouton
+  if (isPwaInstalled()) return;
+
   e.preventDefault();
   deferredPrompt = e;
   showInstallButton();
 });
+
 function showInstallButton() {
-  if (document.getElementById('btnInstallPwa')) return;
+  if (document.getElementById('btnInstallPwa') || isPwaInstalled()) return;
+  
   const btn = document.createElement('button');
   btn.id = 'btnInstallPwa';
   btn.innerHTML = '⬇️ Installer l\'appli';
@@ -5844,15 +5860,25 @@ function showInstallButton() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') showToast('📱', 'Application installée !');
+    if (outcome === 'accepted') {
+      showToast('📱', 'Application installée !');
+      btn.remove(); // Supprimer le bouton dès que l'utilisateur accepte
+    }
     deferredPrompt = null;
-    btn.remove();
   };
   document.body.appendChild(btn);
 }
+
+// Événement déclenché sur ChromeOS / Desktop quand l'installation est terminée
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('btnInstallPwa');
+  if (btn) btn.remove();
+  deferredPrompt = null;
+  console.log('[PWA] Application installée avec succès !');
+});
+
 window.addEventListener('online', () => showToast('🌐', 'Connecté'));
 window.addEventListener('offline', () => showToast('📡', 'Mode hors ligne'));
-
 /* ============================================================
    INITIALISATION
    ============================================================ */
