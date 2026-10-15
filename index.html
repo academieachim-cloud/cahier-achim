@@ -5910,14 +5910,16 @@ window.addEventListener('beforeunload', () => {
     const thresholdWidth = 160;
     const thresholdHeight = 160;
 
+    // Ne vérifier que sur ordinateur (évite le faux positif au déploiement du clavier mobile)
     setInterval(function() {
         if (protectionDeclenchee) return;
-        
-        const widthMismatch = window.outerWidth - window.innerWidth > thresholdWidth;
-        const heightMismatch = window.outerHeight - window.innerHeight > thresholdHeight;
-        
-        if (widthMismatch || heightMismatch) {
-            declencherSecurite("Ouverture des DevTools (redimensionnement)");
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobile) {
+            const widthMismatch = window.outerWidth - window.innerWidth > thresholdWidth;
+            const heightMismatch = window.outerHeight - window.innerHeight > thresholdHeight;
+            if (widthMismatch || heightMismatch) {
+                declencherSecurite("Ouverture des DevTools (redimensionnement)");
+            }
         }
     }, 1000);
 
