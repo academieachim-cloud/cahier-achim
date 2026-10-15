@@ -1,14 +1,16 @@
 const CACHE_NAME = 'achim-cahier-v1';
 
-// Fichiers locaux et scripts CDN nécessaires au fonctionnement hors-ligne
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg',
-  './icon-192.png',
-  './icon-512.png',
-  // CDN externes chargés par l'application :
+  './android-chrome-192x192.png',
+  './android-chrome-512x512.png',
+  './apple-touch-icon.png',
+  './favicon.ico',
+  './favicon-32x32.png',
+  './favicon-16x16.png',
+  // CDN externes :
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
