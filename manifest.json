@@ -4,13 +4,13 @@
   "description": "Cahier interactif et outil pédagogique pour le CP - École ACHIM",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "android-chrome-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "android-chrome-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
