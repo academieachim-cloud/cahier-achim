@@ -1981,8 +1981,9 @@ function applyTheme() {
     else if (themeMode === 'light') btn.textContent = '☀️';
     else btn.textContent = '🌙';
   }
+  // Remplacer #00209F par #337C44 pour garder votre couleur verte fixe
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',
-    eff === 'light' ? '#ffffff' : '#00209F');
+    eff === 'light' ? '#ffffff' : '#337C44');
 }
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'auto';
