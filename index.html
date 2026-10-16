@@ -1019,7 +1019,11 @@ body.presentation-mode #presentControls { display: flex; }
   font-size: 22px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
-#presentControls button.active { background: var(--achim-rouge); }
+#presentControls button.active {
+  background: var(--achim-vert);
+  box-shadow: 0 0 12px rgba(39,174,96,0.7), inset 0 0 0 2px white;
+  transform: scale(1.05);
+}
 #presentControls .page-indicator {
   color: white; font-size: 15px; font-weight: bold;
   padding: 0 14px; min-width: 80px; text-align: center;
@@ -6363,6 +6367,11 @@ function enterPresentation() {
   document.addEventListener('keydown', handlePresentationKey);
   document.addEventListener('mousemove', handleSpotlightMove);
   showToast('🖥️', 'Mode présentation');
+   // Active le stylo par défaut en mode présentation
+  setTimeout(() => {
+    const penBtn = document.getElementById('presentPen');
+    if (penBtn) penBtn.classList.add('active');
+  }, 100);
 }
 function exitPresentation() {
   presentation.active = false; presentation.spotlight = false;
@@ -6410,7 +6419,58 @@ document.getElementById('presentFullscreen').onclick = () => {
   else document.documentElement.requestFullscreen?.().catch(() => {});
 };
 document.getElementById('presentExit').onclick = exitPresentation;
+/* ═══════════════════════════════════════════════════════════
+   OUTILS DESSIN EN MODE PRÉSENTATION
+   ═══════════════════════════════════════════════════════════ */
 
+// ─── Stylo ───
+document.getElementById('presentPen').onclick = () => {
+  state.tool = 'pen';
+  if (state.textSelectMode && btnTextSelect) btnTextSelect.click();
+  Object.values(toolButtons).forEach(b => b && b.classList.remove('active'));
+  if (toolButtons.pen) toolButtons.pen.classList.add('active');
+  const penBtn = document.getElementById('presentPen');
+  const erBtn = document.getElementById('presentEraser');
+  penBtn.classList.add('active');
+  erBtn.classList.remove('active');
+  penBtn.title = '✏️ Stylo actif';
+  erBtn.title = '🧽 Activer la gomme';
+  showToast('✏️', 'Stylo activé');
+};
+
+// ─── Gomme ───
+document.getElementById('presentEraser').onclick = () => {
+  state.tool = 'eraser';
+  // Désactive le mode texte si actif
+  if (state.textSelectMode && btnTextSelect) btnTextSelect.click();
+  // Met à jour l'interface de la toolbar
+  Object.values(toolButtons).forEach(b => b && b.classList.remove('active'));
+  if (toolButtons.eraser) toolButtons.eraser.classList.add('active');
+  // Feedback visuel
+  document.getElementById('presentEraser').classList.add('active');
+  document.getElementById('presentPen').classList.remove('active');
+  showToast('🧽', 'Gomme activée');
+};
+
+// ─── Synchronisation inverse : si l'utilisateur change d'outil via clavier ───
+// (par exemple touche B ou E en mode présentation)
+document.addEventListener('keydown', (e) => {
+  if (!presentation.active) return;
+  const key = e.key.toLowerCase();
+  if (key === 'b' || key === 'p') {
+    // Active le stylo visuellement
+    setTimeout(() => {
+      document.getElementById('presentPen').classList.add('active');
+      document.getElementById('presentEraser').classList.remove('active');
+    }, 50);
+  }
+  if (key === 'e') {
+    setTimeout(() => {
+      document.getElementById('presentEraser').classList.add('active');
+      document.getElementById('presentPen').classList.remove('active');
+    }, 50);
+  }
+});
 /* ============================================================
    PWA — SERVICE WORKER + INSTALL
    ============================================================ */
