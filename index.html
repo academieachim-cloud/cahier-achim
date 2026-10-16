@@ -379,7 +379,7 @@ body.collage-mode #viewer { padding-top: 130px; }
 /* Chaque page fait au maximum 48% de la largeur */
 #viewer.two-pages .page-container {
   max-width: 48% !important;
-  width: auto !important;
+  width: 48% !important;
   height: auto !important;
   margin: 0 !important;
   flex-shrink: 0 !important;
@@ -412,10 +412,20 @@ body.collage-mode #viewer { padding-top: 130px; }
   }
 }
 .page-container {
-  position: relative; background: var(--canvas-bg);
+  position: relative;
+  background: var(--canvas-bg);
   box-shadow: 0 6px 24px var(--shadow);
-  border-radius: 4px; overflow: hidden;
-  transform-origin: top center; transition: transform 0.2s;
+  border-radius: 4px;
+  overflow: hidden;
+  transform-origin: top center;
+  transition: transform 0.2s;
+  /* ⚡ AJOUT : la page respecte son ratio */
+  display: block;
+}
+.page-container canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
 }
 .page-container canvas { display: block; max-width: 100%; height: auto; }
 .draw-canvas {
@@ -4231,13 +4241,17 @@ async function renderImagePages() {
   state.renderedPages.clear();
   state.imageBitmaps.forEach((bmp, idx) => {
     const pageNum = idx + 1;
-    let w = bmp.width, h = bmp.height;
-    const maxW = 1000;
-    if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-    const container = makePageContainer(pageNum, w, h);
-    const ctx = container.querySelector('.pdf-canvas').getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(bmp.img, 0, 0, w, h);
+    // On garde les dimensions naturelles de l'image
+const w = bmp.width, h = bmp.height;
+const container = makePageContainer(pageNum, w, h);
+const canvas = container.querySelector('.pdf-canvas');
+// Le canvas garde ses dimensions internes
+canvas.width = w;
+canvas.height = h;
+const ctx = canvas.getContext('2d');
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, w, h);
+ctx.drawImage(bmp.img, 0, 0, w, h);
     viewer.appendChild(container);
     state.renderedPages.add(pageNum);
   });
@@ -4392,8 +4406,13 @@ function makePageContainer(pageNum, w, h) {
   const container = document.createElement('div');
   container.className = 'page-container';
   container.dataset.page = pageNum;
-  container.style.width = w + 'px';
-  container.style.height = h + 'px';
+  // ⚡ On stocke les dimensions d'origine en data-attributes
+  // et on applique une largeur CSS adaptative (pas en pixels fixes)
+  container.dataset.originalWidth = w;
+  container.dataset.originalHeight = h;
+  container.style.aspectRatio = `${w} / ${h}`;  // ← garde le ratio
+  container.style.width = '100%';                // ← s'adapte au parent
+  container.style.maxWidth = w + 'px';           // ← ne dépasse jamais la taille d'origine
   const pdfCanvas = document.createElement('canvas');
   pdfCanvas.width = w; pdfCanvas.height = h;
   pdfCanvas.className = 'pdf-canvas';
