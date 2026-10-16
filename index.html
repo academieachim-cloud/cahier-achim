@@ -365,14 +365,23 @@ body.collage-mode #subjectBadge { display: none; }
 }
 body.collage-mode #viewer { padding-top: 130px; }
 #viewer.two-pages {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 20px !important;
 }
+
 #viewer.two-pages .page-container {
   margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+@media (max-width: 900px) {
+  #viewer.two-pages {
+    flex-direction: column !important;
+  }
 }
 .page-container {
   position: relative; background: var(--canvas-bg);
@@ -4700,34 +4709,43 @@ document.getElementById('btnClear').onclick = () => {
 document.getElementById('btnPrev').onclick = () => gotoPage(state.currentPage - 1);
 document.getElementById('btnNext').onclick = () => gotoPage(state.currentPage + 1);
 document.getElementById('btnTwoPages').onclick = () => {
-  // Blocage sur mobile en portrait (les 2 pages ne tiennent pas)
   if (window.innerWidth < 700 && window.innerHeight > window.innerWidth) {
     showToast('📱', 'Tourne ton appareil en paysage');
     return;
   }
   
   state.twoPages = !state.twoPages;
-  viewer.classList.toggle('two-pages', state.twoPages);
-  document.getElementById('btnTwoPages').classList.toggle('active', state.twoPages);
   
-  // Mémoriser le choix
+  // ⚡ FORCE le style en inline (contourne les conflits CSS)
+  if (state.twoPages) {
+    viewer.style.display = 'flex';
+    viewer.style.flexDirection = 'row';
+    viewer.style.flexWrap = 'wrap';
+    viewer.style.justifyContent = 'center';
+    viewer.style.alignItems = 'flex-start';
+    viewer.style.gap = '20px';
+  } else {
+    viewer.style.flexDirection = 'column';
+    viewer.style.flexWrap = 'nowrap';
+    viewer.style.justifyContent = 'center';
+    viewer.style.alignItems = 'center';
+    viewer.style.gap = '20px';
+  }
+  
+  document.getElementById('btnTwoPages').classList.toggle('active', state.twoPages);
   try { localStorage.setItem('cahier-twoPages', state.twoPages); } catch {}
   
-  // Ajuster automatiquement le zoom pour que 2 pages tiennent
+  // Ajuster le zoom
   if (state.twoPages) {
-    // Calcul : (largeur écran - marges) / (2 pages A4 à 1.6x scale)
-    const pageWidth = 900; // largeur approximative d'une page rendue
-    const maxZoom = Math.min(1, (window.innerWidth - 80) / (2 * pageWidth));
+    const maxZoom = Math.min(1, (window.innerWidth - 80) / (2 * 900));
     state.zoom = Math.max(0.35, maxZoom);
   } else {
     state.zoom = 1;
   }
   applyZoom();
   
-  // Feedback
   showToast(state.twoPages ? '📖' : '📄', state.twoPages ? 'Mode 2 pages' : 'Mode 1 page');
   
-  // Remonter à la page courante
   setTimeout(() => {
     const el = viewer.querySelector(`.page-container[data-page="${state.currentPage}"]`);
     if (el) window.scrollTo({ top: el.offsetTop - 170, behavior: 'smooth' });
@@ -5995,15 +6013,21 @@ window.addEventListener('load', () => {
   setTimeout(tryLoadSharedLink, 500);
   
   // Restaurer le mode 2 pages
-  try {
-    const saved = localStorage.getItem('cahier-twoPages') === 'true';
-    if (saved && window.innerWidth >= 700) {
-      state.twoPages = true;
-      viewer.classList.add('two-pages');
-      const btn = document.getElementById('btnTwoPages');
-      if (btn) btn.classList.add('active');
-    }
-  } catch {}
+  // Restaurer le mode 2 pages
+try {
+  const saved = localStorage.getItem('cahier-twoPages') === 'true';
+  if (saved && window.innerWidth >= 700) {
+    state.twoPages = true;
+    viewer.style.display = 'flex';
+    viewer.style.flexDirection = 'row';
+    viewer.style.flexWrap = 'wrap';
+    viewer.style.justifyContent = 'center';
+    viewer.style.alignItems = 'flex-start';
+    viewer.style.gap = '20px';
+    const btn = document.getElementById('btnTwoPages');
+    if (btn) btn.classList.add('active');
+  }
+} catch {}
 });
 window.addEventListener('beforeunload', () => {
   if (Object.keys(state.drawData).length > 0) saveLocalAuto();
