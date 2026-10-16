@@ -364,7 +364,16 @@ body.collage-mode #subjectBadge { display: none; }
   min-height: 100vh;
 }
 body.collage-mode #viewer { padding-top: 130px; }
-#viewer.two-pages { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+#viewer.two-pages {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+#viewer.two-pages .page-container {
+  margin: 0 !important;
+}
 .page-container {
   position: relative; background: var(--canvas-bg);
   box-shadow: 0 6px 24px var(--shadow);
@@ -3316,6 +3325,7 @@ function renderAllClips(pageNum) {
   layer.innerHTML = '';
   getClips(pageNum).forEach(c => renderClip(c, pageNum));
 }
+     
 function attachClipEvents(el, clip, pageNum) {
   let dragging = false, resizing = false, rotating = false;
   let startX = 0, startY = 0, startLeft = 0, startTop = 0, startW = 0, startH = 0, startRotation = 0, startAngle = 0;
@@ -4690,9 +4700,38 @@ document.getElementById('btnClear').onclick = () => {
 document.getElementById('btnPrev').onclick = () => gotoPage(state.currentPage - 1);
 document.getElementById('btnNext').onclick = () => gotoPage(state.currentPage + 1);
 document.getElementById('btnTwoPages').onclick = () => {
+  // Blocage sur mobile en portrait (les 2 pages ne tiennent pas)
+  if (window.innerWidth < 700 && window.innerHeight > window.innerWidth) {
+    showToast('📱', 'Tourne ton appareil en paysage');
+    return;
+  }
+  
   state.twoPages = !state.twoPages;
   viewer.classList.toggle('two-pages', state.twoPages);
   document.getElementById('btnTwoPages').classList.toggle('active', state.twoPages);
+  
+  // Mémoriser le choix
+  try { localStorage.setItem('cahier-twoPages', state.twoPages); } catch {}
+  
+  // Ajuster automatiquement le zoom pour que 2 pages tiennent
+  if (state.twoPages) {
+    // Calcul : (largeur écran - marges) / (2 pages A4 à 1.6x scale)
+    const pageWidth = 900; // largeur approximative d'une page rendue
+    const maxZoom = Math.min(1, (window.innerWidth - 80) / (2 * pageWidth));
+    state.zoom = Math.max(0.35, maxZoom);
+  } else {
+    state.zoom = 1;
+  }
+  applyZoom();
+  
+  // Feedback
+  showToast(state.twoPages ? '📖' : '📄', state.twoPages ? 'Mode 2 pages' : 'Mode 1 page');
+  
+  // Remonter à la page courante
+  setTimeout(() => {
+    const el = viewer.querySelector(`.page-container[data-page="${state.currentPage}"]`);
+    if (el) window.scrollTo({ top: el.offsetTop - 170, behavior: 'smooth' });
+  }, 150);
 };
 function gotoPage(n) {
   if (n < 1 || n > state.numPages) return;
@@ -4921,7 +4960,13 @@ function showLetterForCopy(letter) {
 function applyZoom() {
   viewer.querySelectorAll('.page-container').forEach(c => {
     c.style.transform = `scale(${state.zoom})`;
-    c.style.marginBottom = (state.zoom - 1) * c.offsetHeight + 'px';
+    if (state.twoPages) {
+      c.style.marginRight = '0';
+      c.style.marginBottom = '0';
+    } else {
+      c.style.marginRight = '0';
+      c.style.marginBottom = (state.zoom - 1) * c.offsetHeight + 'px';
+    }
   });
   document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
 }
@@ -5903,7 +5948,16 @@ window.addEventListener('beforeinstallprompt', (e) => {
   deferredPrompt = e;
   showInstallButton();
 });
-
+window.addEventListener('resize', () => {
+  if (state.twoPages && window.innerWidth < 700 && window.innerHeight > window.innerWidth) {
+    state.twoPages = false;
+    viewer.classList.remove('two-pages');
+    document.getElementById('btnTwoPages')?.classList.remove('active');
+    state.zoom = 1;
+    applyZoom();
+    showToast('📱', 'Mode 2 pages désactivé');
+  }
+});
 function showInstallButton() {
   if (document.getElementById('btnInstallPwa') || isPwaInstalled()) return;
   
@@ -5939,6 +5993,17 @@ window.addEventListener('offline', () => showToast('📡', 'Mode hors ligne'));
 window.addEventListener('load', () => {
   loadCustomBg();
   setTimeout(tryLoadSharedLink, 500);
+  
+  // Restaurer le mode 2 pages
+  try {
+    const saved = localStorage.getItem('cahier-twoPages') === 'true';
+    if (saved && window.innerWidth >= 700) {
+      state.twoPages = true;
+      viewer.classList.add('two-pages');
+      const btn = document.getElementById('btnTwoPages');
+      if (btn) btn.classList.add('active');
+    }
+  } catch {}
 });
 window.addEventListener('beforeunload', () => {
   if (Object.keys(state.drawData).length > 0) saveLocalAuto();
