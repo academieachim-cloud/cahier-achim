@@ -1934,6 +1934,7 @@ body.text-select-mode button {
 </div>
 
 <div id="viewer"></div>
+<div id="debugBadge" style="position:fixed;bottom:10px;left:10px;background:#000;color:#0f0;padding:8px 12px;border-radius:8px;font-size:12px;font-family:monospace;z-index:9999;display:none">Debug</div>
 <div id="loading"><div class="spinner"></div><div id="loadingText">Chargement...</div><div class="progress"><div id="progressBar"></div></div></div>
 <div id="toast"></div>
 <div id="saveBadge">💾 Sauvegardé</div>
@@ -4709,6 +4710,9 @@ document.getElementById('btnClear').onclick = () => {
 document.getElementById('btnPrev').onclick = () => gotoPage(state.currentPage - 1);
 document.getElementById('btnNext').onclick = () => gotoPage(state.currentPage + 1);
 document.getElementById('btnTwoPages').onclick = () => {
+ // 🔍 DEBUG
+  const dbg = document.getElementById('debugBadge');
+  if (dbg) { dbg.style.display = 'block'; dbg.textContent = '📖 CLIC DÉTECTÉ'; }
   if (window.innerWidth < 700 && window.innerHeight > window.innerWidth) {
     showToast('📱', 'Tourne ton appareil en paysage');
     return;
@@ -4750,6 +4754,12 @@ document.getElementById('btnTwoPages').onclick = () => {
     const el = viewer.querySelector(`.page-container[data-page="${state.currentPage}"]`);
     if (el) window.scrollTo({ top: el.offsetTop - 170, behavior: 'smooth' });
   }, 150);
+   // 🔍 DEBUG FINAL
+  if (dbg) {
+    const v = document.getElementById('viewer');
+    const cs = getComputedStyle(v);
+    dbg.textContent = `📖 ${v.className} | flex:${cs.flexDirection} | zoom:${state.zoom.toFixed(2)}`;
+  }
 };
 function gotoPage(n) {
   if (n < 1 || n > state.numPages) return;
