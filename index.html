@@ -1705,6 +1705,16 @@ body.text-select-mode button {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+ /* Masquer les flèches ▲▼ du champ "aller à la page" */
+#pageJumpInput::-webkit-outer-spin-button,
+#pageJumpInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+#pageJumpInput:focus {
+  outline: 2px solid var(--achim-vert);
+  border-color: var(--achim-vert);
+}
 </style>
 </head>
 <body>
@@ -1773,13 +1783,19 @@ body.text-select-mode button {
   </div>
 
   <div class="tool-group">
-    <button class="tool-btn small" id="btnPrev">◀</button>
-    <span id="pageInfo" style="padding:0 6px;font-size:12px;">1/1</span>
-    <button class="tool-btn small" id="btnNext">▶</button>
+    <button class="tool-btn small" id="btnPrev" title="Page précédente">◀</button>
+    <input type="number" id="pageJumpInput" min="1" value="1"
+           title="Aller à la page N (Entrée pour valider)"
+           style="width:52px;padding:6px 4px;font-size:13px;text-align:center;
+                  border:2px solid var(--border-color);border-radius:8px;
+                  background:var(--bg-btn);color:var(--text-main);
+                  font-weight:bold;-moz-appearance:textfield;">
+    <span id="pageInfo" style="padding:0 4px;font-size:12px;color:var(--text-muted)">/1</span>
+    <button class="tool-btn small" id="btnNext" title="Page suivante">▶</button>
     <button class="tool-btn small" id="btnTwoPages" title="2 pages">📖</button>
     <button class="tool-btn" id="btnThumbnails" title="Miniatures">📑</button>
-      <button class="tool-btn" id="btnPdfSearch" title="Rechercher dans le PDF (Ctrl+F)" style="display:none">🔍</button>
-  </div>
+    <button class="tool-btn" id="btnPdfSearch" title="Rechercher dans le PDF (Ctrl+F)" style="display:none">🔍</button>
+</div>
 
   <div class="tool-group" style="background:rgba(39,174,96,0.15)">
     <button class="tool-btn" id="btnSaveWork" style="background:var(--achim-vert)" title="Enregistrer">💾</button>
@@ -4813,8 +4829,66 @@ function gotoPage(n) {
   thumbList?.querySelectorAll('.thumb-item').forEach((t, idx) => {
     t.classList.toggle('active', idx + 1 === n);
   });
+ /* ============================================================
+   CHAMP "ALLER À LA PAGE"
+   ============================================================ */
+const pageJumpInput = document.getElementById('pageJumpInput');
+
+// Synchronise l'input quand on change de page
+function syncPageJumpInput() {
+  if (!pageJumpInput) return;
+  pageJumpInput.value = state.currentPage;
+  pageJumpInput.max = state.numPages;
+  // Le span /N affiche juste le total
+  const span = document.getElementById('pageInfo');
+  if (span) span.textContent = `/${state.numPages}`;
 }
-function updatePageInfo() { if (pageInfo) pageInfo.textContent = `${state.currentPage}/${state.numPages}`; }
+
+// Aller à la page saisie
+function jumpToTypedPage() {
+  if (!pageJumpInput) return;
+  const n = parseInt(pageJumpInput.value, 10);
+  if (isNaN(n)) {
+    pageJumpInput.value = state.currentPage;
+    return;
+  }
+  const clamped = Math.max(1, Math.min(state.numPages, n));
+  if (clamped !== n) pageJumpInput.value = clamped;  // corrige visuellement
+  gotoPage(clamped);
+}
+
+// Écouteurs
+if (pageJumpInput) {
+  // Au clavier : Entrée valide
+  pageJumpInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      pageJumpInput.blur();   // retire le focus pour fermer le clavier mobile
+      jumpToTypedPage();
+    }
+    // Échap annule
+    if (e.key === 'Escape') {
+      pageJumpInput.value = state.currentPage;
+      pageJumpInput.blur();
+    }
+  });
+
+  // À la perte de focus : valide aussi
+  pageJumpInput.addEventListener('blur', jumpToTypedPage);
+
+  // Au clic : sélectionne tout pour permettre la saisie directe
+  pageJumpInput.addEventListener('focus', () => pageJumpInput.select());
+}
+}
+function updatePageInfo() {
+  // Met à jour l'input
+  if (pageJumpInput) {
+    pageJumpInput.value = state.currentPage;
+    pageJumpInput.max = state.numPages;
+  }
+  // Le span affiche juste /N
+  if (pageInfo) pageInfo.textContent = `/${state.numPages}`;
+}
 window.addEventListener('scroll', () => {
   if (!state.numPages) return;
   const containers = viewer.querySelectorAll('.page-container');
