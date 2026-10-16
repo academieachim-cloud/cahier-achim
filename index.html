@@ -1715,6 +1715,45 @@ body.text-select-mode button {
   outline: 2px solid var(--achim-vert);
   border-color: var(--achim-vert);
 }
+ /* ═══════════════════════════════════════════════════════════
+   OVERLAY TEXTE — Poignées de manipulation
+   ═══════════════════════════════════════════════════════════ */
+.text-overlay-wrapper {
+  pointer-events: auto;
+}
+
+.text-overlay {
+  min-width: 40px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.85);
+  border: 2px dashed var(--achim-bleu);
+  border-radius: 4px;
+  outline: none;
+  font-family: system-ui, sans-serif;
+  white-space: pre-wrap;
+  max-width: 400px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.text-handle {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+  touch-action: none;
+}
+
+.text-handle-move { top: -12px; left: -12px; background: #3498db; cursor: move; }
+.text-handle-resize { bottom: -12px; right: -12px; background: #9b59b6; cursor: nwse-resize; }
+.text-handle-delete { top: -12px; right: -12px; background: #e74c3c; }
 </style>
 </head>
 <body>
@@ -4693,26 +4732,78 @@ function createTextOverlay(canvas, pageNum, pos) {
   const container = canvas.parentElement;
   const rect = canvas.getBoundingClientRect();
   const sx = rect.width / canvas.width, sy = rect.height / canvas.height;
+
+  // Crée un wrapper pour pouvoir avoir des poignées autour
+  const wrapper = document.createElement('div');
+  wrapper.className = 'text-overlay-wrapper';
+  wrapper.style.position = 'absolute';
+  wrapper.style.left = (pos.x * sx) + 'px';
+  wrapper.style.top = (pos.y * sy) + 'px';
+  wrapper.style.zIndex = '50';
+
   const input = document.createElement('div');
   input.className = 'text-overlay';
   input.contentEditable = true;
-  input.style.left = (pos.x * sx) + 'px';
-  input.style.top = (pos.y * sy) + 'px';
   input.style.color = state.color;
   input.style.fontSize = Math.max(16, state.size * 4) + 'px';
-  container.appendChild(input);
+  input.style.position = 'relative';   // pas absolute : il est dans le wrapper
+  input.style.left = '0';
+  input.style.top = '0';
+
+  // Poignées (comme les clips)
+  ['move', 'resize', 'delete'].forEach(type => {
+    const h = document.createElement('div');
+    h.className = `text-handle text-handle-${type}`;
+    h.dataset.handle = type;
+    h.textContent = { move: '✥', resize: '⤡', delete: '✕' }[type];
+    wrapper.appendChild(h);
+  });
+
+  wrapper.appendChild(input);
+  container.appendChild(wrapper);
   input.focus();
-  input.addEventListener('blur', () => {
+  // Sélectionne tout le texte existant pour faciliter la réécriture
+  document.execCommand('selectAll', false, null);
+
+  // Édition terminée → on enregistre dans drawData et on rend persistantes les poignées
+  input.addEventListener('blur', (e) => {
+    // Ignore si on clique sur une poignée (pour ne pas "graver" le texte)
+    if (e.relatedTarget && e.relatedTarget.classList?.contains('text-handle')) return;
+
     const text = input.textContent.trim();
-    if (text) {
-      const data = state.drawData[pageNum] || (state.drawData[pageNum] = { strokes: [], clips: [] });
-      const stroke = { tool: 'text', text, x: pos.x, y: pos.y, color: state.color, fontSize: Math.max(16, state.size * 4) };
-      data.strokes.push(stroke);
-      pushGlobalAction({ type: 'text', page: pageNum, stroke });
-      redrawPage(pageNum, canvas);
-      scheduleSave();
+    if (!text) {
+      // Texte vide → on supprime
+      wrapper.remove();
+      return;
     }
-    input.remove();
+    const data = state.drawData[pageNum] || (state.drawData[pageNum] = { strokes: [], clips: [] });
+    // On enregistre la position RÉELLE par rapport au canvas, pas au wrapper
+    const finalX = pos.x;
+    const finalY = pos.y;
+    const stroke = {
+      tool: 'text',
+      text,
+      x: finalX, y: finalY,
+      color: state.color,
+      fontSize: Math.max(16, state.size * 4),
+      id: generateId('text'),
+    };
+    data.strokes.push(stroke);
+    pushGlobalAction({ type: 'text', page: pageNum, stroke });
+    redrawPage(pageNum, canvas);
+    scheduleSave();
+    wrapper.remove();
+  });
+
+  // Permet de valider avec Ctrl+Entrée
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+      ev.preventDefault();
+      input.blur();
+    }
+    if (ev.key === 'Escape') {
+      wrapper.remove();
+    }
   });
 }
 function placeSticker(canvas, pageNum, pos) {
